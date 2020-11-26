@@ -53,6 +53,14 @@ def PrepareSegmentation(args)
 
     # Populate RAT with spatial extent of each object
     rsgislib.rastergis.spatialExtent(clumps=segs, minXX='MinXX', minXY='MinXY', maxXX='MaxXX', maxXY='MaxXY', minYX='MinYX', minYY='MinYY', maxYX='MaxYX', maxYY='MaxYY')
+    
+    # Create a an image of the tiles.
+    modeTileMsk = segs.replace('.kea','_modeTileMsk.kea')
+    if os.path.isfile(modeTileMsk):
+        print('File Exists: skipping')
+    else:
+        rsgislib.rastergis.exportCol2GDALImage(segs, modeTileMsk, 'KEA', rsgislib.TYPE_16UINT, 'tiles')
+        rsgislib.rastergis.populateStats(clumps=modeTileMsk, addclrtab=True, calcpyramids=True, ignorezero=True)
 
 
 def main():
