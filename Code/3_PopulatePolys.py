@@ -53,7 +53,16 @@ def PopulateVectors(GPKG, rasterDir, outdir):
                 minthresh = -1
                 maxthresh = 1
                 band = 1
-                rsgislib.zonalstats.calcZonalBandStatsTestPolyPts(veclyr, img, band, minthresh, maxthresh, minfield=None, maxfield=None, meanfield='JanNDVI', stddevfield=None, sumfield=None, countfield=None, modefield=None, medianfield=None, out_no_data_val=0)
+                mean_name = img.split('_')[-1].split('.')[0] + '_mean'
+                min_name = img.split('_')[-1].split('.')[0] + '_min'
+                max_name = img.split('_')[-1].split('.')[0] + '_max'
+                std_name = img.split('_')[-1].split('.')[0] + '_std'
+                sum_name = img.split('_')[-1].split('.')[0] + '_sum'
+                count_name = img.split('_')[-1].split('.')[0] + '_count'
+                mode_name = img.split('_')[-1].split('.')[0] + '_mode'
+                med_name = img.split('_')[-1].split('.')[0] + '_med'
+                
+                rsgislib.zonalstats.calcZonalBandStatsTestPolyPts(veclyr, img, band, minthresh, maxthresh, minfield=min_name, maxfield=max_name, meanfield=mean_name, stddevfield=std_name, sumfield=sum_name, countfield=count_name, modefield=mode_name, medianfield=med_name, out_no_data_val=0)
                 
                 print('Done')
 
@@ -63,7 +72,7 @@ def PopulateVectors(GPKG, rasterDir, outdir):
 def main():
     print("Use 'python 3_PopulatePolys.py -h' for help")
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--segments", type=str, help="Specify the dir to the vectorized segmentation")
+    parser.add_argument("-s", "--segments", type=str, help="Specify the dir to the vectorized segmentation (GPKGs)")
     parser.add_argument("-r", "--rasters", type=str, help="Specify the dir to the rasters to populate into the objects")
     parser.add_argument("-o", "--outdir", type=str, help="Specify the output dir for the populated vectors")
     parser.add_argument("-c", "--cores", type=str, help="Specify the output dir for the populated vectors")
