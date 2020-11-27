@@ -147,6 +147,7 @@ def VectorizeSegs(tile, tile_vec_segs_dir, tile_segs_msk_lbl_dir):
             rsgislib.vectorutils.polygoniseRaster2VecLyr(out_vec, out_vec_segs_lyr, 'GPKG', out_segs_mskd_lbl_img, imgBandNo=1, maskImg=out_segs_mskd_lbl_img, imgMaskBandNo=1, replace_file=False, replace_lyr=True, pxl_val_fieldname='PXLVAL')
     except Exception as e:
         print(e)
+        
             
         
 def main():
