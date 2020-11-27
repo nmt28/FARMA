@@ -36,7 +36,7 @@ import rsgislib.segmentation
 import subprocess
 from rsgislib import vectorutils
 from multiprocessing import Pool
-
+import argparse
 
 def CreateMasks(tile, ModeMaskImage, out_tiles_dir, tile_msk_dir):
     try:
@@ -142,11 +142,12 @@ def VectorizeSegs(tile, tile_vec_segs_dir):
             
         
 def main():
+    print("Use 'python 2_BoundingBoxes_Docker.py -h' for help")
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", type=str, help="Specify the input Segmentation KEA file")
     parser.add_argument("-m", "--mode", type=str, help="Specify the mode tiles mask KEA file (from script 1)")
     parser.add_argument("-r", "--resolution", type=float, help="Specify the segmentation KEA resolution")
-    parser.add_argument("-c", "--cores", type=float, help="Specify the number of cores to use")
+    parser.add_argument("-c", "--cores", type=int, help="Specify the number of cores to use")
     args = parser.parse_args()
 
     segs = args.input
@@ -253,12 +254,13 @@ def main():
     # Close the Seg file
     ratDataset = None
 
-    p = Pool(args.cores)
+    ncores = int(args.cores)
+    p = Pool(ncores)
     p.map(CreateMasks, tiles_used, out_tiles_dir, tile_msk_dir)
-    p.map(MaskTiles(tile, tile_segs_dir)
-    p.map(ExtractObjects(tile, tile_segs_msk_dir)
-    p.map(RelabelSegs(tile, tile_segs_msk_lbl_dir)
-    p.map(VectorizeSegs(tile, tile_vec_segs_dir)
+    p.map(MaskTiles, tile, tile_segs_dir)
+    p.map(ExtractObjects, tile, tile_segs_msk_dir)
+    p.map(RelabelSegs, tile, tile_segs_msk_lbl_dir)
+    p.map(VectorizeSegs, tile, tile_vec_segs_dir)
 
 
 if __name__ == "__main__":

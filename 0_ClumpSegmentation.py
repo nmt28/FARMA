@@ -23,11 +23,10 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.'''
 
-# A script to use RSGISLib to prepare a KEA format
-# segmentation for the FARMA workflow.
-# A Regular grid with a user specifed tile size is generated
-# and is populated into the segmentation, alongside the dimensions
-# (max extent) of each object
+# A script to use RSGISLib to prepare KEA format
+# segmentation clumps for the FARMA workflow.
+# Multiple methods of clumping are avaialable
+# depending upon RAM/CORES available
 
 import rsgislib.segmentation
 import rsgislib.rastergis

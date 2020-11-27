@@ -32,9 +32,10 @@
 import rsgislib.segmentation
 import rsgislib.rastergis
 import argparse
+import os
 
 
-def PrepareSegmentation(args)
+def PrepareSegmentation(args):
 
     segs = args.input
 
@@ -64,9 +65,10 @@ def PrepareSegmentation(args)
 
 
 def main():
+    print("Use 'python 1_CreateRegGrid.py -h' for help")
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", type=str, help="Specify the input Segmentation KEA file")
-        parser.add_argument("-ts", "--tilesize", type=int, help="Specify the tiling size (X dimension) in pixels (e.g. 1000)")
+    parser.add_argument("-t", "--tilesize", type=int, help="Specify the tiling size (X dimension) in pixels (e.g. 1000)")
     args = parser.parse_args()
 
     if str(args.input).endswith('.kea'):
@@ -75,7 +77,7 @@ def main():
         print("INPUT SEGMENTATION FILE MUST END '.kea'")
         os._exit(1)
         
-    if args.tilesize = None:
+    if args.tilesize == None:
         print("SPECIFY THE TILE SIZE IN PIXELS")
         os._exit(1)
 
