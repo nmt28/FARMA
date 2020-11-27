@@ -36,25 +36,27 @@ import rsgislib.segmentation
 import subprocess
 from rsgislib import vectorutils
 from multiprocessing import Pool
+import multiprocessing
 import argparse
+from itertools import product
 
-def CreateMasks(tile, ModeMaskImage, out_tiles_dir, tile_msk_dir):
+def CreateMasks(tile, out_tiles_dir, tile_msk_dir, mode_img_file):#, ModeMaskImage, out_tiles_dir, tile_msk_dir):
     try:
         #########
         # STEP 2: MAKE A MASK OF THE VALID OBJECTS PER TILE (All objects are 1 object)
         # USING EXTENT OF BLANK IMAGE
         ##########
         # in tile name (blank image)
-        img_tile = os.path.join(out_tiles_dir, "tile_{0}.kea".format(tile))
-        # Input tile objects mosaic image
-        tile_mosaic = './tiles_mask.kea'
+        print(tile)
+        img_tile = os.path.join(out_tiles_dir, "tile_{0}.kea".format(str(tile)))
+        print(img_tile)
         # output tile mask name
         out_msk_img = os.path.join(tile_msk_dir, "tile_msk_{0}.kea".format(tile))
         print("Creating {}".format(out_msk_img))
         # Hack to export the segs per tile to a new image
         # Uses bandmath which subsets the resulst to smallest input image
         # step1: put the bands into the banddefns
-        bandDefnSeq = [rsgislib.imagecalc.BandDefn('b1', ModeMaskImage, 1), rsgislib.imagecalc.BandDefn('tile', img_tile, 1)]
+        bandDefnSeq = [rsgislib.imagecalc.BandDefn('b1', mode_img_file, 1), rsgislib.imagecalc.BandDefn('tile', img_tile, 1)]
         # Makes a binary image if b1 (the number in the tiles image) matches the tile number (based on mode).
         # Blank mask image used for image extent only
         if os.path.isfile(out_msk_img):
@@ -67,16 +69,17 @@ def CreateMasks(tile, ModeMaskImage, out_tiles_dir, tile_msk_dir):
     except Exception as e:
         print(e)
             
-def MaskTiles(tile, tile_segs_dir):
+def MaskTiles(tile, tile_segs_dir, segfile, out_tiles_dir):
     try:
         ########
         # STEP 3: CUT OUT OBJECTS FROM SEGS BASED ON TILE EXTENT (BLANK IMAGE EXTENT)
         ###########
         # set output
+        img_tile = os.path.join(out_tiles_dir, "tile_{0}.kea".format(str(tile)))
         out_segs_img = os.path.join(tile_segs_dir, "tile_segs_{0}.kea".format(tile))
         print("Creating {}".format(out_segs_img))
         # Use the seg file and the blank file
-        bandDefnSeq = [rsgislib.imagecalc.BandDefn('b1', file, 1), rsgislib.imagecalc.BandDefn('tile', img_tile, 1)]
+        bandDefnSeq = [rsgislib.imagecalc.BandDefn('b1', segfile, 1), rsgislib.imagecalc.BandDefn('tile', img_tile, 1)]
         # create new image (binary) of all segs within tile (will cut objects)
         if os.path.isfile(out_segs_img):
             print('out_segs_img exists')
@@ -88,13 +91,15 @@ def MaskTiles(tile, tile_segs_dir):
     except Exception as e:
         print(e)
 
-def ExtractObjects(tile, tile_segs_msk_dir):
+def ExtractObjects(tile, tile_segs_msk_dir, tile_segs_dir, tile_msk_dir, out_tiles_dir):
     try:
         ############
         # STEP 4: USE MASK (STEP 2) TO MASK SEGS KEEPING ONLY RELEVANT ONES
         # EACH OBJECT IS ITS OWN OBJECT UNLIKE ALL BEING 1 OBJECT AS IN MASK
         ##############
         # set output
+        out_segs_img = os.path.join(tile_segs_dir, "tile_segs_{0}.kea".format(tile))
+        out_msk_img = os.path.join(tile_msk_dir, "tile_msk_{0}.kea".format(tile))
         out_segs_mskd_img = os.path.join(tile_segs_msk_dir, "tile_segs_mskd_{0}.kea".format(tile))
         if os.path.isfile(out_segs_mskd_img):
             print('out_segs_maskd_img exists')
@@ -109,11 +114,13 @@ def ExtractObjects(tile, tile_segs_msk_dir):
         print(e)
 
 
-def RelabelSegs(tile, tile_segs_msk_lbl_dir):
+def RelabelSegs(tile, tile_segs_msk_lbl_dir, tile_segs_msk_dir, tile_msk_dir):
     try:
         ############
         # STEP 5: RELABEL RAT IN EACH ONE SO ID BEGINS AT 0
         #############
+        out_segs_mskd_img = os.path.join(tile_segs_msk_dir, "tile_segs_mskd_{0}.kea".format(tile))
+        out_msk_img = os.path.join(tile_msk_dir, "tile_msk_{0}.kea".format(tile))
         out_segs_mskd_lbl_img = os.path.join(tile_segs_msk_lbl_dir, "tile_segs_mskd_lbl_{0}.kea".format(tile))
         if os.path.isfile(out_segs_mskd_lbl_img):
             print('out_segs_mskd_lbl_img exists')
@@ -125,11 +132,12 @@ def RelabelSegs(tile, tile_segs_msk_lbl_dir):
     except Exception as e:
         print(e)
         
-def VectorizeSegs(tile, tile_vec_segs_dir):
+def VectorizeSegs(tile, tile_vec_segs_dir, tile_segs_msk_lbl_dir):
     try:
         ###############
         # STEP 6: Vecotrize and add layer to GPKG
         ###############
+        out_segs_mskd_lbl_img = os.path.join(tile_segs_msk_lbl_dir, "tile_segs_mskd_lbl_{0}.kea".format(tile))
         out_vec = os.path.join(tile_vec_segs_dir, "tile_segs_mskd_lbl_vec{0}.gpkg".format(tile))
         if os.path.isfile(out_vec):
             print('out_vec exists')
@@ -151,50 +159,53 @@ def main():
     args = parser.parse_args()
 
     segs = args.input
+    global ModeImage
+    ModeImage = args.mode
     
     # Create folders
     # Base directory
-    basedir = '/'.join(segs.split('/')[:-2]) + '/'
+    basedir = '/'.join(segs.split('/')[:-1]) + '/'
     # Base tiles
-    out_tiles_dir = basedir + '/1_base_tiles/'
+    global out_tiles_dir
+    out_tiles_dir = basedir + '1_base_tiles/'
     if os.path.isdir(out_tiles_dir):
         pass
     else:
-        subprocess.call('mkdir ' + out_tiles_dir)
+        subprocess.call('mkdir ' + out_tiles_dir, shell=True)
     # Tile masks
-    tile_msk_dir = basedir + '/2_tile_msks/'
+    tile_msk_dir = basedir + '2_tile_msks/'
     if os.path.isdir(tile_msk_dir):
         pass
     else:
-        subprocess.call('mkdir ' + tile_msk_dir)
+        subprocess.call('mkdir ' + tile_msk_dir, shell=True)
     # Tile segs
-    tile_segs_dir = basedir + '/3_seg_tiles/'
+    tile_segs_dir = basedir + '3_seg_tiles/'
     if os.path.isdir(tile_segs_dir):
         pass
     else:
-        subprocess.call('mkdir ' + tile_segs_dir)
+        subprocess.call('mkdir ' + tile_segs_dir, shell=True)
     # Seg mask tiles
-    tile_segs_msk_dir = basedir + '/4_seg_msk_tiles/'
+    tile_segs_msk_dir = basedir + '4_seg_msk_tiles/'
     if os.path.isdir(tile_segs_msk_dir):
         pass
     else:
-        subprocess.call('mkdir ' + tile_segs_msk_dir)
+        subprocess.call('mkdir ' + tile_segs_msk_dir, shell=True)
     # Seg mask tiles labels
-    tile_segs_msk_lbl_dir = basedir + '/5_seg_msk_lbl_tiles/'
+    tile_segs_msk_lbl_dir = basedir + '5_seg_msk_lbl_tiles/'
     if os.path.isdir(tile_segs_msk_lbl_dir):
         pass
     else:
-        subprocess.call('mkdir ' + tile_segs_msk_lbl_dir)
+        subprocess.call('mkdir ' + tile_segs_msk_lbl_dir, shell=True)
     # tiled vector segs
-    tile_vec_segs_dir = basedir + '/6_GPKGs/'
+    tile_vec_segs_dir = basedir + '6_GPKGs/'
     if os.path.isdir(tile_vec_segs_dir):
         pass
     else:
-        subprocess.call('mkdir ' + tile_vec_segs_dir)
+        subprocess.call('mkdir ' + tile_vec_segs_dir, shell=True)
 
 
     # get segmentation projection
-    wkt_str = rsgislib.imageutils.getWKTProjFromImage(file)
+    wkt_str = rsgislib.imageutils.getWKTProjFromImage(segs)
     #open segmentation
     ratDataset = gdal.Open(segs, gdal.GA_Update)
 
@@ -238,29 +249,49 @@ def main():
         
         # Set the bounding box dimensions
         bbox = [minX, maxX, minY, maxY]
-        print("{0}: [{1}, {2}, {3}, {4}]".format(tile, minX, maxX, minY, maxY))
+        #print("{0}: [{1}, {2}, {3}, {4}]".format(tile, minX, maxX, minY, maxY))
         # Check the tile is valid
         if (minX!=maxX) and (minY!=maxY):
             # Set the tile name
             img_tile = os.path.join(out_tiles_dir, "tile_{0}.kea".format(tile))
-            print("Creating {}".format(img_tile))
-            # create a blank image per tile
-            rsgislib.imageutils.createBlankImgFromBBOX(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap2grid=True)
-            # HACK TO REMOVE REALLY BIG TILES: Only appends small tiles
-            # Appends the tile number only
-            if ((maxX-minX) < 50000) and ((maxY-minY) < 50000):
-                tiles_used.append(tile)
+            if os.path.isfile(img_tile):
+                #print("FILE EXISTS: SKIPPING")
+                tiles_used.append(str(tile))
+            else:
+                #print("Creating {}".format(img_tile))
+                # create a blank image per tile
+                rsgislib.imageutils.createBlankImgFromBBOX(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap2grid=True)
+                # HACK TO REMOVE REALLY BIG TILES: Only appends small tiles
+                # Appends the tile number only
+                if ((maxX-minX) < 50000) and ((maxY-minY) < 50000):
+                    tiles_used.append(str(tile))
 
     # Close the Seg file
     ratDataset = None
+    
+    
+    out_tiles_dir_lst = [out_tiles_dir for x in tiles_used]
+    tile_msk_dir_lst = [tile_msk_dir for x in tiles_used]
+    tile_segs_dir_lst = [tile_segs_dir for x in tiles_used]
+    tile_segs_msk_dir_lst = [tile_segs_msk_dir for x in tiles_used]
+    tile_segs_msk_lbl_dir_lst = [tile_segs_msk_lbl_dir for x in tiles_used]
+    tile_vec_segs_dir_lst = [tile_vec_segs_dir for x in tiles_used]
+    modetilelst = [ModeImage for x in tiles_used]
+    seglist = [segs for x in tiles_used]
+    
+    
+    for i in range(len(tiles_used)):
+        print(tiles_used[i], modetilelst[i], out_tiles_dir_lst[i], tile_msk_dir_lst[i])
+    
 
     ncores = int(args.cores)
-    p = Pool(ncores)
-    p.map(CreateMasks, tiles_used, out_tiles_dir, tile_msk_dir)
-    p.map(MaskTiles, tile, tile_segs_dir)
-    p.map(ExtractObjects, tile, tile_segs_msk_dir)
-    p.map(RelabelSegs, tile, tile_segs_msk_lbl_dir)
-    p.map(VectorizeSegs, tile, tile_vec_segs_dir)
+    #p = Pool(ncores)
+    with multiprocessing.Pool(processes=ncores) as pool:
+        pool.starmap(CreateMasks, zip(tiles_used, out_tiles_dir_lst, tile_msk_dir_lst, modetilelst))
+        pool.starmap(MaskTiles, zip(tiles_used, tile_segs_dir_lst, seglist, out_tiles_dir_lst))
+        pool.starmap(ExtractObjects, zip(tiles_used, tile_segs_msk_dir_lst, tile_segs_dir_lst, tile_msk_dir_lst, out_tiles_dir_lst))
+        pool.starmap(RelabelSegs, zip(tiles_used, tile_segs_msk_lbl_dir_lst, tile_segs_msk_dir_lst, tile_msk_dir_lst))
+        pool.starmap(VectorizeSegs, zip(tiles_used, tile_vec_segs_dir_lst, tile_segs_msk_lbl_dir_lst))
 
 
 if __name__ == "__main__":

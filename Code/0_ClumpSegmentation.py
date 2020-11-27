@@ -31,6 +31,7 @@
 import rsgislib.segmentation
 import rsgislib.rastergis
 import argparse
+import os
 
 
 def ClumpSegmentation(args):
@@ -66,6 +67,8 @@ def ClumpSegmentation(args):
             print("CLUMP FILE EXISTS: SKIPPING")
         else:
             rsgislib.segmentation.tiledclump.performClumpingMultiProcess(segs, outputimage, tmpDIR='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
+            
+    rsgislib.rastergis.populateStats(outputimage, True, True)
         
 
     
@@ -80,7 +83,7 @@ def main():
     parser.add_argument("-t", "--tilesize", type=int, help="Specify the tilesize in pixels in the X dimension")
     args = parser.parse_args()
 
-    if str(args.input) == None:
+    if args.input == None:
         print("INPUT SEGMENTATION MISSING")
         os._exit(1)
     elif args.method == None:
