@@ -32,12 +32,15 @@ from rsgislib import zonalstats
 from rsgislib import vectorutils
 import glob
 import os
+from multiprocessing import Pool
+import multiprocessing
+import subprocess
 
 
 
 def PopulateVectors(GPKG, rasterDir, outdir):
     
-        rasters = glob.glob(rasterDir)
+        rasters = glob.glob(rasterDir + '/*')
         
         outfile = os.path.join(outdir, GPKG.split('/')[-1])
         if os.path.isfile(outfile):
@@ -48,11 +51,13 @@ def PopulateVectors(GPKG, rasterDir, outdir):
 
             for img in rasters:
                 minthresh = -1
-                maxthres = 1
+                maxthresh = 1
                 band = 1
-                rsgislib.zonalstats.calcZonalBandStatsTestPolyPts(veclyr, img, band, minthresh, maxthresh, minfield=None, maxfield=None, meanfield=None, stddevfield=None, sumfield=None, countfield=None, modefield=None, medianfield=None, out_no_data_val=0)
+                rsgislib.zonalstats.calcZonalBandStatsTestPolyPts(veclyr, img, band, minthresh, maxthresh, minfield=None, maxfield=None, meanfield='JanNDVI', stddevfield=None, sumfield=None, countfield=None, modefield=None, medianfield=None, out_no_data_val=0)
+                
+                print('Done')
 
-            rsgislib.vectorutils.writeVecLyr2File(veclyr, os.path.join(outfile, 'LayerName', 'GPKG', options=['OVERWRITE=YES', 'SPATIAL_INDEX=YES']))
+            rsgislib.vectorutils.writeVecLyr2File(veclyr, outfile, 'LayerName', 'GPKG', options=['OVERWRITE=YES', 'SPATIAL_INDEX=YES'])
 
 
 def main():
@@ -61,6 +66,7 @@ def main():
     parser.add_argument("-s", "--segments", type=str, help="Specify the dir to the vectorized segmentation")
     parser.add_argument("-r", "--rasters", type=str, help="Specify the dir to the rasters to populate into the objects")
     parser.add_argument("-o", "--outdir", type=str, help="Specify the output dir for the populated vectors")
+    parser.add_argument("-c", "--cores", type=str, help="Specify the output dir for the populated vectors")
     args = parser.parse_args()
 
     if str(args.segments) == None:
@@ -70,20 +76,26 @@ def main():
         print("SPECIFY THE DIR TO THE RASTERS")
         os._exit(1)
     else:
-        print(args.input, args.method)
+        print(args.segments)
 
     GPKGDir = args.segments
     GPKGfiles = glob.glob(GPKGDir + '/*.gpkg')
+    print(GPKGfiles)
 
     rastersDir = args.rasters
 
     rasterDirectory = [rastersDir for x in GPKGfiles]
     outputdirectory = [args.outdir for x in GPKGfiles]
     
+    if os.path.isdir(args.outdir):
+        print("OUPUT DIR EXISTS")
+    else:
+        subprocess.call('mkdir ' + args.outdir, shell=True)
+    
 
     ncores = int(args.cores)
-    p = Pool(ncores)
-    p.map(PopulateVectors, GPKGfiles, rasterDirectory, outputdirectory)
+    with multiprocessing.Pool(processes=ncores) as pool:
+        pool.starmap(PopulateVectors, zip(GPKGfiles, rasterDirectory, outputdirectory))
     
 
 if __name__ == "__main__":
