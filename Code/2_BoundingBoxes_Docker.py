@@ -252,12 +252,13 @@ def main():
         bbox = [minX, maxX, minY, maxY]
         #print("{0}: [{1}, {2}, {3}, {4}]".format(tile, minX, maxX, minY, maxY))
         # Check the tile is valid
-        if (minX!=maxX) and (minY!=maxY):
+        if img_tile == 'tile_1.kea':
+            pass
+        elif (minX!=maxX) and (minY!=maxY):
             # Set the tile name
             img_tile = os.path.join(out_tiles_dir, "tile_{0}.kea".format(tile))
             if os.path.isfile(img_tile):
-                #print("FILE EXISTS: SKIPPING")
-                tiles_used.append(str(tile))
+                    tiles_used.append(str(tile))
             else:
                 #print("Creating {}".format(img_tile))
                 # create a blank image per tile
