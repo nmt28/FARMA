@@ -252,7 +252,8 @@ def main():
         bbox = [minX, maxX, minY, maxY]
         #print("{0}: [{1}, {2}, {3}, {4}]".format(tile, minX, maxX, minY, maxY))
         # Check the tile is valid
-        if img_tile == 'tile_1.kea':
+        img_check = os.path.join(out_tiles_dir, "tile_{0}.kea".format(tile))
+        if img_check == os.path.join(out_tiles_dir, "tile_1.kea"):
             pass
         elif (minX!=maxX) and (minY!=maxY):
             # Set the tile name
