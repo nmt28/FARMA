@@ -5,3 +5,5 @@ FARMA is a framework for efficiently merging VHR-derived objects with commonly a
 
 
 Our publication on FARMA can be found here: https://www.mdpi.com/2072-4292/12/20/3459
+
+![Alt text](https://github.com/nmt28/FARMA/blob/main/Logo.png?raw=true "Title")
