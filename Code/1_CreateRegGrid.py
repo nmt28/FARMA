@@ -2,8 +2,8 @@
 ''' Author: Nathan Thomas
     Email: nathan.m.thomas@nasa.gov, @DrNASApants
     Date: 11/26/2020
-    Version: 1.0
-    Copyright 2020 Natha M Thomas
+    Version: 2.0
+    Copyright 2020 Nathan M Thomas
     
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -44,24 +44,24 @@ def PrepareSegmentation(args):
     if os.path.isfile(RegGrid):
         print('Regular Grid Exists: Skipping')
     else:
-        rsgislib.segmentation.generateRegularGrid(segs, RegGrid, 'KEA', args.tilesize, args.tilesize)
+        rsgislib.segmentation.generate_regular_rid(segs, RegGrid, 'KEA', args.tilesize, args.tilesize)
 
     # Populate RAT with statistics
-    rsgislib.rastergis.populateStats(clumps=segs, addclrtab=True, calcpyramids=True, ignorezero=True)
+    rsgislib.rastergis.pop_rat_img_stats(clumps=segs, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
 
     # Populate RAT with Mode Regular Grid Value
-    rsgislib.rastergis.populateRATWithMode(valsimage=RegGrid, clumps=segs, outcolsname='tiles', usenodata=False, nodataval=0, outnodata=False, modeband=1, ratband=1)
+    rsgislib.rastergis.populate_rat_with_mode(input_img=RegGrid, clumps_img=segs, out_cols_name='tiles', use_no_data=False, no_data_val=0, out_no_data=False, mode_band=1, rat_band=1)
 
     # Populate RAT with spatial extent of each object
-    rsgislib.rastergis.spatialExtent(clumps=segs, minXX='MinXX', minXY='MinXY', maxXX='MaxXX', maxXY='MaxXY', minYX='MinYX', minYY='MinYY', maxYX='MaxYX', maxYY='MaxYY')
+    rsgislib.rastergis.spatialExtent(clumps_img=segs, min_xx='MinXX', min_xy='MinXY', max_xx='MaxXX', max_xy='MaxXY', min_yx='MinYX', min_yy='MinYY', max_yx='MaxYX', max_yy='MaxYY')
     
     # Create a an image of the tiles.
     modeTileMsk = segs.replace('.kea','_modeTileMsk.kea')
     if os.path.isfile(modeTileMsk):
         print('File Exists: skipping')
     else:
-        rsgislib.rastergis.exportCol2GDALImage(segs, modeTileMsk, 'KEA', rsgislib.TYPE_16UINT, 'tiles')
-        rsgislib.rastergis.populateStats(clumps=modeTileMsk, addclrtab=True, calcpyramids=True, ignorezero=True)
+        rsgislib.rastergis.export_col_to_gdal_img(segs, modeTileMsk, 'KEA', rsgislib.TYPE_16UINT, 'tiles')
+        rsgislib.rastergis.pop_rat_img_stats(clumps=modeTileMsk, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
 
 
 def main():

@@ -47,7 +47,7 @@ def PopulateVectors(GPKG, rasterDir, outdir):
             print('FILE EXISTS: SKIPPING')
         else:
             layername = GPKG.split('/')[-1]
-            mem_ds, veclyr = rsgislib.vectorutils.readVecLyr2Mem(GPKG, layername)
+            mem_ds, veclyr = rsgislib.vectorutils.read_vec_lyr_to_mem(GPKG, layername)
 
             for img in rasters:
                 minthresh = -1
@@ -62,11 +62,11 @@ def PopulateVectors(GPKG, rasterDir, outdir):
                 mode_name = img.split('_')[-1].split('.')[0] + '_mode'
                 med_name = img.split('_')[-1].split('.')[0] + '_med'
                 
-                rsgislib.zonalstats.calcZonalBandStatsTestPolyPts(veclyr, img, band, minthresh, maxthresh, minfield=min_name, maxfield=max_name, meanfield=mean_name, stddevfield=std_name, sumfield=sum_name, countfield=count_name, modefield=mode_name, medianfield=med_name, out_no_data_val=0)
+                rsgislib.zonalstats.calc_zonal_band_stats_test_poly_pts(veclyr, img, band, minthresh, maxthresh, min_field=min_name, max_field=max_name, mean_field=mean_name, stddev_field=std_name, sum_field=sum_name, count_field=count_name, mode_field=mode_name, median_field=med_name, out_no_data_val=0)
                 
                 print('Done')
 
-            rsgislib.vectorutils.writeVecLyr2File(veclyr, outfile, 'LayerName', 'GPKG', options=['OVERWRITE=YES', 'SPATIAL_INDEX=YES'])
+            rsgislib.vectorutils.write_vec_lyr_to_file(veclyr, outfile, 'LayerName', 'GPKG', options=['OVERWRITE=YES', 'SPATIAL_INDEX=YES'])
 
 
 def main():

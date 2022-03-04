@@ -2,7 +2,7 @@
 ''' Author: Nathan Thomas
     Email: nathan.m.thomas@nasa.gov, @DrNASApants
     Date: 11/26/2020
-    Version: 1.0
+    Version: 2.0
     Copyright 2020 Natha M Thomas
     
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -59,14 +59,14 @@ def ClumpSegmentation(args):
         if os.path.isfile(outputimage):
             print("CLUMP FILE EXISTS: SKIPPING")
         else:
-            rsgislib.segmentation.tiledclump.performClumpingSingleThread(segs, outputimage, tmpDIR='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA')
+            rsgislib.segmentation.tiledclump.perform_clumping_single_thread(segs, outputimage, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA')
             
     if ClumpMethod == "TILED_MULTI":
         outputimage = segs.split('.')[0] + '_clumps.kea'
         if os.path.isfile(outputimage):
             print("CLUMP FILE EXISTS: SKIPPING")
         else:
-            rsgislib.segmentation.tiledclump.performClumpingMultiProcess(segs, outputimage, tmpDIR='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
+            rsgislib.segmentation.tiledclump.perform_clumping_multi_process(segs, outputimage, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
             
     rsgislib.rastergis.populateStats(outputimage, True, True)
         

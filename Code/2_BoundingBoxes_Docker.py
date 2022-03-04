@@ -2,8 +2,8 @@
 ''' Author: Nathan Thomas
     Email: nathan.m.thomas@nasa.gov, @DrNASApants
     Date: 11/26/2020
-    Version: 1.0
-    Copyright 2020 Natha M Thomas
+    Version: 2.0
+    Copyright 2020 Nathan M Thomas
     
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -63,9 +63,9 @@ def CreateMasks(tile, out_tiles_dir, tile_msk_dir, mode_img_file):#, ModeMaskIma
             pass
             print('Out Mask Image Exists...')
         else:
-            rsgislib.imagecalc.bandMath(out_msk_img, 'b1=={}?1:0'.format(tile), 'KEA', rsgislib.TYPE_8UINT, bandDefnSeq)
+            rsgislib.imagecalc.band_math(out_msk_img, 'b1=={}?1:0'.format(tile), 'KEA', rsgislib.TYPE_8UINT, bandDefnSeq)
             # Populate the stats (stats, pyramids etc)
-            rsgislib.rastergis.populateStats(clumps=out_msk_img, addclrtab=True, calcpyramids=True, ignorezero=True)
+            rsgislib.rastergis.pop_rat_img_stats(clumps=out_msk_img, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
     except Exception as e:
         print(e)
             
@@ -85,9 +85,9 @@ def MaskTiles(tile, tile_segs_dir, segfile, out_tiles_dir):
             print('out_segs_img exists')
             pass
         else:
-            rsgislib.imagecalc.bandMath(out_segs_img, 'b1', 'KEA', rsgislib.TYPE_32UINT, bandDefnSeq)
+            rsgislib.imagecalc.band_math(out_segs_img, 'b1', 'KEA', rsgislib.TYPE_32UINT, bandDefnSeq)
             # Add stats
-            rsgislib.rastergis.populateStats(clumps=out_segs_img, addclrtab=True, calcpyramids=True, ignorezero=True)
+            rsgislib.rastergis.pop_rat_img_stats(clumps=out_segs_img, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
     except Exception as e:
         print(e)
 
@@ -107,9 +107,9 @@ def ExtractObjects(tile, tile_segs_msk_dir, tile_segs_dir, tile_msk_dir, out_til
         else:
             print("Creating {}".format(out_segs_mskd_img))
             # Mask the objects in tile (step 3) by valid objects (mask: step 2)
-            rsgislib.imageutils.maskImage(out_segs_img, out_msk_img, out_segs_mskd_img, 'KEA', rsgislib.TYPE_32UINT, 0, 0)
+            rsgislib.imageutils.mask_img(out_segs_img, out_msk_img, out_segs_mskd_img, 'KEA', rsgislib.TYPE_32UINT, 0, 0)
             # Add stats
-            rsgislib.rastergis.populateStats(clumps=out_segs_mskd_img, addclrtab=True, calcpyramids=True, ignorezero=True)
+            rsgislib.rastergis.pop_rat_img_stats(clumps=out_segs_mskd_img, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
     except Exception as e:
         print(e)
 
@@ -127,8 +127,8 @@ def RelabelSegs(tile, tile_segs_msk_lbl_dir, tile_segs_msk_dir, tile_msk_dir):
         else:
             print("Creating {}".format(out_segs_mskd_lbl_img))
             # Relabel
-            rsgislib.segmentation.relabelClumps(out_segs_mskd_img, out_segs_mskd_lbl_img, 'KEA', False)
-            rsgislib.rastergis.populateStats(clumps=out_segs_mskd_lbl_img, addclrtab=True, calcpyramids=True, ignorezero=True)
+            rsgislib.segmentation.relabel_clumps(out_segs_mskd_img, out_segs_mskd_lbl_img, 'KEA', False)
+            rsgislib.rastergis.pop_rat_img_stats(clumps=out_segs_mskd_lbl_img, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
     except Exception as e:
         print(e)
         
@@ -144,7 +144,7 @@ def VectorizeSegs(tile, tile_vec_segs_dir, tile_segs_msk_lbl_dir):
             pass
         else:
             out_vec_segs_lyr = "tile_segs_mskd_lbl_vec{0}.gpkg".format(tile)
-            rsgislib.vectorutils.polygoniseRaster2VecLyr(out_vec, out_vec_segs_lyr, 'GPKG', out_segs_mskd_lbl_img, imgBandNo=1, maskImg=out_segs_mskd_lbl_img, imgMaskBandNo=1, replace_file=False, replace_lyr=True, pxl_val_fieldname='PXLVAL')
+            rsgislib.vectorutils.polygonise_raster_to_vec_lyr(out_vec, out_vec_segs_lyr, 'GPKG', out_segs_mskd_lbl_img, img_band=1, mask_img=out_segs_mskd_lbl_img, mask_band=1, replace_file=False, replace_lyr=True, pxl_val_fieldname='PXLVAL')
     except Exception as e:
         print(e)
         
@@ -206,7 +206,7 @@ def main():
 
 
     # get segmentation projection
-    wkt_str = rsgislib.imageutils.getWKTProjFromImage(segs)
+    wkt_str = rsgislib.imageutils.get_wkt_proj_from_img(segs)
     #open segmentation
     ratDataset = gdal.Open(segs, gdal.GA_Update)
 
@@ -263,7 +263,7 @@ def main():
             else:
                 #print("Creating {}".format(img_tile))
                 # create a blank image per tile
-                rsgislib.imageutils.createBlankImgFromBBOX(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap2grid=True)
+                rsgislib.imageutils.create_blank_img_from_bbox(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap2grid=True)
                 # HACK TO REMOVE REALLY BIG TILES: Only appends small tiles
                 # Appends the tile number only
                 if ((maxX-minX) < 50000) and ((maxY-minY) < 50000):
