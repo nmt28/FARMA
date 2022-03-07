@@ -1,5 +1,5 @@
 # FARMA
-FARMA is currently available under RSGISLib V4 via docker. FARMA will be updated for RSGISLib V5
+FARMA is currently available under RSGISLib V5
 
 FARMA is the Fusion Approach for Remotely-Sensed Mapping of Agriculture.
 
