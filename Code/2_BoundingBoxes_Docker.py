@@ -35,6 +35,7 @@ import rsgislib.imagecalc
 import rsgislib.segmentation
 import subprocess
 from rsgislib import vectorutils
+from rsgislib.vectorutils import createvectors
 from multiprocessing import Pool
 import multiprocessing
 import argparse
@@ -144,7 +145,7 @@ def VectorizeSegs(tile, tile_vec_segs_dir, tile_segs_msk_lbl_dir):
             pass
         else:
             out_vec_segs_lyr = "tile_segs_mskd_lbl_vec{0}.gpkg".format(tile)
-            rsgislib.vectorutils.polygonise_raster_to_vec_lyr(out_vec, out_vec_segs_lyr, 'GPKG', out_segs_mskd_lbl_img, img_band=1, mask_img=out_segs_mskd_lbl_img, mask_band=1, replace_file=False, replace_lyr=True, pxl_val_fieldname='PXLVAL')
+            rsgislib.vectorutils.createvectors.polygonise_raster_to_vec_lyr(out_vec, out_vec_segs_lyr, 'GPKG', out_segs_mskd_lbl_img, img_band=1, mask_img=out_segs_mskd_lbl_img, mask_band=1, replace_file=False, replace_lyr=True, pxl_val_fieldname='PXLVAL')
     except Exception as e:
         print(e)
         
@@ -263,7 +264,7 @@ def main():
             else:
                 #print("Creating {}".format(img_tile))
                 # create a blank image per tile
-                rsgislib.imageutils.create_blank_img_from_bbox(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap2grid=True)
+                rsgislib.imageutils.create_blank_img_from_bbox(bbox, wkt_str, img_tile, args.resolution, 0, 1, 'KEA', rsgislib.TYPE_32UINT, snap_to_grid=True)
                 # HACK TO REMOVE REALLY BIG TILES: Only appends small tiles
                 # Appends the tile number only
                 if ((maxX-minX) < 50000) and ((maxY-minY) < 50000):

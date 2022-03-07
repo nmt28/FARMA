@@ -68,7 +68,7 @@ def ClumpSegmentation(args):
         else:
             rsgislib.segmentation.tiledclump.perform_clumping_multi_process(segs, outputimage, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
             
-    rsgislib.rastergis.populateStats(outputimage, True, True)
+    rsgislib.rastergis.pop_rat_img_stats(clumps_img=segs, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
         
 
     

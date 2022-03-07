@@ -44,16 +44,16 @@ def PrepareSegmentation(args):
     if os.path.isfile(RegGrid):
         print('Regular Grid Exists: Skipping')
     else:
-        rsgislib.segmentation.generate_regular_rid(segs, RegGrid, 'KEA', args.tilesize, args.tilesize)
+        rsgislib.segmentation.generate_regular_grid(segs, RegGrid, 'KEA', args.tilesize, args.tilesize)
 
     # Populate RAT with statistics
-    rsgislib.rastergis.pop_rat_img_stats(clumps=segs, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
+    rsgislib.rastergis.pop_rat_img_stats(clumps_img=segs, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
 
     # Populate RAT with Mode Regular Grid Value
     rsgislib.rastergis.populate_rat_with_mode(input_img=RegGrid, clumps_img=segs, out_cols_name='tiles', use_no_data=False, no_data_val=0, out_no_data=False, mode_band=1, rat_band=1)
 
     # Populate RAT with spatial extent of each object
-    rsgislib.rastergis.spatialExtent(clumps_img=segs, min_xx='MinXX', min_xy='MinXY', max_xx='MaxXX', max_xy='MaxXY', min_yx='MinYX', min_yy='MinYY', max_yx='MaxYX', max_yy='MaxYY')
+    rsgislib.rastergis.clumps_spatial_extent(clumps_img=segs, min_xx='MinXX', min_xy='MinXY', max_xx='MaxXX', max_xy='MaxXY', min_yx='MinYX', min_yy='MinYY', max_yx='MaxYX', max_yy='MaxYY')
     
     # Create a an image of the tiles.
     modeTileMsk = segs.replace('.kea','_modeTileMsk.kea')
@@ -61,7 +61,7 @@ def PrepareSegmentation(args):
         print('File Exists: skipping')
     else:
         rsgislib.rastergis.export_col_to_gdal_img(segs, modeTileMsk, 'KEA', rsgislib.TYPE_16UINT, 'tiles')
-        rsgislib.rastergis.pop_rat_img_stats(clumps=modeTileMsk, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
+        rsgislib.rastergis.pop_rat_img_stats(clumps_img=modeTileMsk, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
 
 
 def main():
