@@ -1,4 +1,7 @@
 # FARMA
+
+[![DOI](https://zenodo.org/badge/301774703.svg)](https://zenodo.org/badge/latestdoi/301774703)
+
 FARMA is currently available under RSGISLib V5
 
 FARMA is the Fusion Approach for Remotely-Sensed Mapping of Agriculture.
