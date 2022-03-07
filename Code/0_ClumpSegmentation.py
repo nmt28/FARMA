@@ -30,6 +30,7 @@
 
 import rsgislib.segmentation
 import rsgislib.rastergis
+import rsgislib.tools.filetools
 import argparse
 import os
 
@@ -38,38 +39,28 @@ def ClumpSegmentation(args):
 
     segs = args.input
     
-    ClumpMethod = args.method
-    
-    if ClumpMethod == "CLUMP_RAM":
-        outputimage = segs.split('.')[0] + '_clumps.kea'
-        if os.path.isfile(outputimage):
-            print("CLUMP FILE EXISTS: SKIPPING")
-        else:
-            rsgislib.segmentation.clump(args.input, outputimage, 'KEA', True, 0, False)
-            
-    if ClumpMethod == "CLUMP_DISK":
-        outputimage = segs.split('.')[0] + '_clumps.kea'
-        if os.path.isfile(outputimage):
-            print("CLUMP FILE EXISTS: SKIPPING")
-        else:
-            rsgislib.segmentation.clump(args.input, outputimage, 'KEA', False, 0, False)
-            
-    if ClumpMethod == "TILED_SINGLE":
-        outputimage = segs.split('.')[0] + '_clumps.kea'
-        if os.path.isfile(outputimage):
-            print("CLUMP FILE EXISTS: SKIPPING")
-        else:
-            rsgislib.segmentation.tiledclump.perform_clumping_single_thread(segs, outputimage, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA')
-            
-    if ClumpMethod == "TILED_MULTI":
-        outputimage = segs.split('.')[0] + '_clumps.kea'
-        if os.path.isfile(outputimage):
-            print("CLUMP FILE EXISTS: SKIPPING")
-        else:
-            rsgislib.segmentation.tiledclump.perform_clumping_multi_process(segs, outputimage, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
-            
-    rsgislib.rastergis.pop_rat_img_stats(clumps_img=segs, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
+    basename = rsgislib.tools.filetools.get_file_basename(segs)
+    dir_path = os.path.dirname(segs)
+    out_img_name = '{}_clumps.kea'.format(basename)
+    out_img_path = os.path.join(dir_path, out_img_name)
+    print(out_img_path)
+    if not os.path.isfile(out_img_path):
+        ClumpMethod = args.method
         
+        if ClumpMethod == "CLUMP_RAM":
+            rsgislib.segmentation.clump(args.input, out_img_path, 'KEA', True, 0, False)
+        elif ClumpMethod == "CLUMP_DISK":
+            rsgislib.segmentation.clump(args.input, out_img_path, 'KEA', False, 0, False)
+        elif ClumpMethod == "TILED_SINGLE":
+            rsgislib.segmentation.tiledclump.perform_clumping_single_thread(segs, out_img_path, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA')
+        elif ClumpMethod == "TILED_MULTI":
+            rsgislib.segmentation.tiledclump.perform_clumping_multi_process(segs, out_img_path, tmp_dir='tmp', width=args.tilesize, height=args.tilesize, gdalformat='KEA', nCores=args.cores)
+        else:
+            raise Exception("Specified method ({}) was not recognised".format(ClumpMethod))
+                
+        rsgislib.rastergis.pop_rat_img_stats(clumps_img=out_img_path, add_clr_tab=True, calc_pyramids=True, ignore_zero=True)
+    else:
+        print("CLUMP FILE EXISTS: SKIPPING")
 
     
 
